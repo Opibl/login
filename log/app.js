@@ -85,6 +85,45 @@ app.post('/login', async (req, res) => {
     }
 });
 
+// Página de cambio de contraseña
+app.get('/change-password', (req, res) => {
+    res.sendFile(__dirname + '/cambio_contrasena.html');
+});
+
+// ... (otras configuraciones y rutas)
+
+app.post('/change-password', async (req, res) => {
+    const { username, newPassword } = req.body;
+
+    try {
+        // Busca al usuario por nombre de usuario en la base de datos
+        const userResult = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+
+        if (userResult.rows.length > 0) {
+            const userId = userResult.rows[0].id;
+
+            // Actualiza la contraseña en la base de datos
+            const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+            await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashedNewPassword, userId]);
+
+            // Redirige a la página de inicio o muestra un mensaje de éxito
+            res.redirect('/');
+        } else {
+            // Usuario no encontrado
+            res.status(401).send('Usuario no encontrado.');
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error en el cambio de contraseña. Por favor, inténtalo nuevamente.');
+    }
+});
+
+// ...
+
+
+
+
+
 app.listen(port, () => {
     console.log(`Servidor iniciado en http://localhost:${port}`);
 });
